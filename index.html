@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colour Fusion - World of Words</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Bubblegum+Sans&display=swap');
+
+        body {
+            font-family: 'Comic Neue', cursive;
+            background: #fdfcf0;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        .bubble-font {
+            font-family: 'Bubblegum Sans', cursive;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 2.5rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border: 6px solid #fff;
+        }
+
+        .btn-primary {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: scale(1);
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.04);
+            filter: brightness(1.05);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.96);
+        }
+
+        .rainbow-text {
+            background-image: linear-gradient(to left, #ff0000, #ff8000, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff);
+            -webkit-background-clip: text;
+            color: transparent;
+            background-size: 200% auto;
+            animation: rainbowMove 3s linear infinite;
+        }
+
+        @keyframes rainbowMove {
+            to { background-position: 200% center; }
+        }
+
+        .option-btn {
+            border: 3px solid transparent;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background-color: #f8fafc;
+            transform: translateY(-2px);
+        }
+
+        .option-btn.selected {
+            border-color: #6366f1;
+            background-color: #eef2ff;
+        }
+
+        .correct { background-color: #d1fae5 !important; border-color: #10b981 !important; color: #065f46; }
+        .wrong { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b; }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        .progress-bar {
+            height: 16px;
+            border-radius: 8px;
+            background: #e2e8f0;
+            overflow: hidden;
+            border: 2px solid #fff;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff8000, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff);
+            background-size: 1000% 100%;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .learn-section {
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: #fff;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.05);
+        }
+
+        /* Question Box Style */
+        .question-box {
+            display: inline-block;
+            min-width: 120px;
+            height: 48px;
+            vertical-align: middle;
+            background: #f1f5f9;
+            border: 2px dashed #94a3b8;
+            border-radius: 8px;
+            margin: 0 8px;
+            position: relative;
+            top: -2px;
+            transition: all 0.3s;
+        }
+
+        .question-box.filled {
+            border-style: solid;
+            background: #eef2ff;
+            border-color: #6366f1;
+            color: #4338ca;
+            padding: 0 12px;
+            min-width: fit-content;
+            line-height: 44px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 bg-yellow-50">
+
+    <div id="game-container" class="w-full max-w-3xl">
+        <!-- Screens injected here -->
+    </div>
+
+    <script>
+        const gameData = {
+            lower: {
+                title: "Lower Primary (P1-P2)",
+                homeMsg: "🎨 Welcome to the Colorful World of Words!",
+                homeSub: "Just like mixing yellow and blue makes green, we can add letters to a root word to make brand-new words!",
+                learnContent: [
+                    { title: "Prefixes", text: "A Prefix is a group of letters we add to the <b>front</b> of a word.", example: "Example: If you take ‘happy’ and add ‘un-‘, you get ‘unhappy’ (which means not happy!)." },
+                    { title: "Suffixes", text: "A Suffix is a group of letters we add to the <b>back</b> of a word.", example: "Example: If you take ‘play’ and add ‘-ful’, you get ‘playful’ (which means full of play!)." },
+                    { title: "The Mix!", text: "Sometimes, you can add letters to the front and the back at the same time!", example: "Example: ‘un’- + ‘help’ + ‘-ful’ = ‘unhelpful’" }
+                ],
+                questions: [
+                    { q: "If you _____ a person's name, you have said it incorrectly.", options: ["unpronounced", "mispronounced", "repronounced"], correct: "mispronounced", explain: "<b>Unpronounced:</b> means a letter or a sound in a word is silent.<br><b>Repronounced:</b> to pronounce again." },
+                    { q: "Before the party starts, we need to _____ the oven so it is hot enough to bake the cake.", options: ["overheat", "reheat", "preheat"], correct: "preheat", explain: "<b>Overheat:</b> getting too hot, way hotter than you are supposed to.<br><b>Reheat:</b> to make food hot again." },
+                    { q: "The ice cream was so _____ that I finished the whole bowl!", options: ["tasty", "tasteless", "tasteful"], correct: "tasty", explain: "<b>Tasteless:</b> without flavor.<br><b>Tasteful:</b> showing good aesthetic judgment." },
+                    { q: "If you _____ your toys, you might not be able to find them later.", options: ["replace", "displace", "misplace"], correct: "misplace", explain: "<b>Misplace:</b> to put in a wrong place.<br><b>Displace:</b> to take the place of someone or something." },
+                    { q: "The puppy was _____ because it could not find its mother.", options: ["fearless", "fearsome", "fearful"], correct: "fearful", explain: "<b>Fearsome:</b> describes something causing great fear.<br><b>Fearless:</b> refers to being bold or brave." },
+                    { q: "The soft pillows and fuzzy blankets made the bed feel very _____", options: ["comforting", "comfortable", "comfortless"], correct: "comfortable", explain: "<b>Comforting:</b> ease the grief or distress of someone.<br><b>Comfortless:</b> without comfort." },
+                    { q: "The player was _____ from the game for breaking the rules.", options: ["disqualified", "unqualified", "requalified"], correct: "disqualified", explain: "<b>Unqualified:</b> lacking the necessary skills or knowledge.<br><b>Requalified:</b> become eligible again." },
+                    { q: "The movie stopped playing because the Wi-Fi signal was too weak, causing the Ipad to _____ from the internet", options: ["reconnect", "misconnect", "disconnect"], correct: "disconnect", explain: "<b>Misconnect:</b> to join or link incorrectly.<br><b>Reconnect:</b> connect back together." },
+                    { q: "Which of the following is used wrongly? (A job or role)", options: ["teacher", "docter", "farmer"], correct: "docter", explain: "'Docter' is spelled incorrectly. It should use the suffix '-or' to spell 'doctor'." },
+                    { q: "The construction workers wore safety gears for their own _____.", options: ["protective", "protection", "protector"], correct: "protection", explain: "<b>Protective:</b> showing a desire to protect.<br><b>Protector:</b> a person or thing that protects." }
+                ]
+            },
+            middle: {
+                title: "Middle Primary (P3-P4)",
+                homeMsg: "🎨 Welcome to the Colorful World of Words!",
+                homeSub: "Just like mixing yellow and blue makes green, we combine verbs with a particle to make brand-new words! They are called phrasal verbs.",
+                learnContent: [
+                    { title: "What is a Verb?", text: "A verb is an action word.", example: "Examples: give, break, take" },
+                    { title: "What is a Particle?", text: "A particle is a small 'helper word' that doesn't really have a function on its own, but it completely changes the meaning of the verb.", example: "Examples: up, off, out" },
+                    { title: "The Fusion!", text: "When we combine the verb 'give' with the particle 'up', we get the phrasal verb 'give up' (To stop trying).", example: "Example: 'Don't give up on that math problem, you almost solved it.'" }
+                ],
+                questions: [
+                    { q: "We had to _____ the picnic because of rain.", options: ["Put off", "Put away", "Put out"], correct: "Put off", explain: "<ul class='list-disc ml-5'><li><b>Put off:</b> To delay doing something.</li><li><b>Put away:</b> To tidy up.</li><li><b>Put out:</b> To extinguish a fire.</li></ul>" },
+                    { q: "The scientist’s hard work helped _____ a cure for the illness.", options: ["bring about", "bring up", "bring back"], correct: "bring about", explain: "<ul class='list-disc ml-5'><li><b>Bring up:</b> To mention a topic.</li><li><b>Bring back:</b> To return an object or memory.</li><li><b>Bring about:</b> To cause something.</li></ul>" },
+                    { q: "To keep your lungs healthy, it is important to _____ from vapes and cigarettes.", options: ["keep away", "keep back", "keep out"], correct: "keep away", explain: "<ul class='list-disc ml-5'><li><b>Keep away:</b> To avoid going near.</li><li><b>Keep out:</b> To not enter.</li><li><b>Keep back:</b> To stay at a distance.</li></ul>" },
+                    { q: "Suzie was eating an apple when her tooth finally decided to _____.", options: ["fall out", "fall through", "fall down"], correct: "fall out", explain: "<ul class='list-disc ml-5'><li><b>Fall out:</b> To become detached.</li><li><b>Fall through:</b> When a plan fails.</li><li><b>Fall down:</b> To trip.</li></ul>" },
+                    { q: "Since he was not hungry for his vegetables, Leo started to _____ his salad.", options: ["pick away", "pick at", "pick on"], correct: "pick at", explain: "<ul class='list-disc ml-5'><li><b>Pick at:</b> To eat small bites.</li><li><b>Pick on:</b> To tease.</li><li><b>Pick away:</b> To slowly remove bits.</li></ul>" },
+                    { q: "As soon as the music started, the whole class decided to _____ a dance", options: ["break into", "break out in"], correct: "break into", explain: "<ul class='list-disc ml-5'><li><b>Break into:</b> To start doing something suddenly.</li><li><b>Break out in:</b> To suddenly get a rash or sweat.</li></ul>" },
+                    { q: "We should _____ on going to the beach until the rain stops.", options: ["hold out", "hold off"], correct: "hold off", explain: "<ul class='list-disc ml-5'><li><b>Hold off:</b> To delay doing something.</li><li><b>Hold out:</b> To wait for something better.</li></ul>" },
+                    { q: "After eating ten cupcakes and riding the roller coaster, Leo felt like he was going to _____.", options: ["throw out", "throw up"], correct: "throw up", explain: "<ul class='list-disc ml-5'><li><b>Throw up:</b> To vomit.</li><li><b>Throw out:</b> To discard or force to leave.</li></ul>" },
+                    { q: "The workers had to _____ the old building to build a new one.", options: ["pull apart", "pull down"], correct: "pull down", explain: "<ul class='list-disc ml-5'><li><b>Pull down:</b> To demolish a building.</li><li><b>Pull apart:</b> To separate two things.</li></ul>" },
+                    { q: "Sarah and Maya finally decided to _____ and play together again.", options: ["make up", "make out"], correct: "make up", explain: "<ul class='list-disc ml-5'><li><b>Make up:</b> To become friends again.</li><li><b>Make out:</b> To barely see or hear something.</li></ul>" }
+                ]
+            },
+            upper: {
+                title: "Upper Primary (P5-P6)",
+                homeMsg: "🎨 Welcome to the Colorful World of Words!",
+                homeSub: "In art, Blue and Orange are a classic combo... Prepositional collocations work the same way! The verb stays the same color, but wears a specific preposition for its 'signature look'!",
+                learnContent: [
+                    { title: "Grammar Style", text: "Unlike Phrasal Verbs, Collocations are just about grammar style in context. The meaning does not change, but the partnership is permanent.", example: "" },
+                    { title: "No Mixing!", text: "You are not mixing a new colour, you are just making sure your colours matches!", example: "" },
+                    { title: "Example", text: "<b>I am interested in video games.</b> (correct preposition used)<br><b>I am interested at video games.</b> (incorrect preposition used)", example: "" }
+                ],
+                questions: [
+                    { q: "John has been _____ theft.", options: ["accused of", "accused for", "accused to"], correct: "accused of", explain: "In English grammar, 'accused' is always followed by 'of' when referring to a charge." },
+                    { q: "Leo was completely _____ the new video game.", options: ["addicted to", "addicted at", "addicted with"], correct: "addicted to", explain: "We say someone is 'addicted to' a habit or activity." },
+                    { q: "We were _____ how he survived the horrific accident.", options: ["amazed at", "amazed with", "amazed of"], correct: "amazed at", explain: "The standard preposition for 'amazed' is 'at' when reacting to something." },
+                    { q: "Suzie is _____ seafood so she always double-checks the menu.", options: ["allergic with", "allergic to", "allergic from"], correct: "allergic to", explain: "Medical conditions like allergies use the preposition 'to'." },
+                    { q: "The baby is _____ the dark.", options: ["afraid with", "afraid of", "afraid by"], correct: "afraid of", explain: "The correct collocation is 'afraid of'." },
+                    { q: "It will take time for the students to accustom themselves _____ the changes.", options: ["with", "to", "at"], correct: "to", explain: "To 'accustom yourself to' something means to get used to it." },
+                    { q: "Maya had to _____ accidentally knocking over the paint.", options: ["apologise for", "apologise to", "apologise from"], correct: "apologise for", explain: "You apologise 'to' a person 'for' a mistake." },
+                    { q: "Sarah felt _____ the upcoming art competition.", options: ["anxious with", "anxious about", "anxious for"], correct: "anxious about", explain: "One feels 'anxious about' a future event." },
+                    { q: "Leo was caught in the heavy rain and he _____ a high fever.", options: ["suffered from", "suffered to", "suffered at"], correct: "suffered from", explain: "One 'suffers from' a disease or condition." },
+                    { q: "The new Roblox game was incredibly _____ the students.", options: ["popular with", "popular to", "popular at"], correct: "popular with", explain: "When something is liked by a group, it is 'popular with' them." }
+                ]
+            }
+        };
+
+        let state = {
+            view: 'home',
+            level: null,
+            currentQuestionIndex: 0,
+            score: 0,
+            shuffledQuestions: [],
+            selectedOption: null,
+            isAnswered: false
+        };
+
+        function render() {
+            const container = document.getElementById('game-container');
+            
+            if (state.view === 'home') {
+                container.innerHTML = `
+                    <div class="card p-10 text-center animate-fadeIn">
+                        <h1 class="bubble-font text-6xl mb-6 rainbow-text floating">Colour Fusion</h1>
+                        <p class="text-2xl text-gray-700 mb-2 font-bold">🎨 Welcome to the Colorful World of Words!</p>
+                        <p class="text-lg text-gray-500 mb-10">Pick your grade level to start the adventure!</p>
+                        <div class="grid gap-6">
+                            <button onclick="selectLevel('lower')" class="group relative py-6 rounded-3xl bg-pink-500 text-white text-2xl font-bold btn-primary shadow-xl border-b-8 border-pink-700">
+                                <span class="block">Lower Primary</span>
+                                <span class="text-sm font-normal opacity-90">P1 - P2</span>
+                            </button>
+                            <button onclick="selectLevel('middle')" class="group relative py-6 rounded-3xl bg-orange-500 text-white text-2xl font-bold btn-primary shadow-xl border-b-8 border-orange-700">
+                                <span class="block">Middle Primary</span>
+                                <span class="text-sm font-normal opacity-90">P3 - P4</span>
+                            </button>
+                            <button onclick="selectLevel('upper')" class="group relative py-6 rounded-3xl bg-blue-500 text-white text-2xl font-bold btn-primary shadow-xl border-b-8 border-blue-700">
+                                <span class="block">Upper Primary</span>
+                                <span class="text-sm font-normal opacity-90">P5 - P6</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else if (state.view === 'learn') {
+                const data = gameData[state.level];
+                container.innerHTML = `
+                    <div class="card p-8 animate-fadeIn max-h-[90vh] overflow-y-auto">
+                        <h2 class="bubble-font text-4xl text-center mb-6 rainbow-text">Let's Learn Together!</h2>
+                        <div class="bg-blue-50 p-6 rounded-2xl border-4 border-dashed border-blue-200 mb-6 text-center">
+                            <p class="text-xl text-blue-900 font-medium leading-relaxed">${data.homeSub}</p>
+                        </div>
+                        <div class="space-y-4 mb-8">
+                            ${data.learnContent.map((item, i) => `
+                                <div class="learn-section border-2 border-gray-100 border-l-[12px] border-l-${state.level === 'lower' ? 'pink' : state.level === 'middle' ? 'orange' : 'blue'}-500">
+                                    <h4 class="text-2xl font-bold mb-2 text-gray-800">${item.title}</h4>
+                                    <p class="text-gray-700 text-lg mb-2">${item.text}</p>
+                                    ${item.example ? `<p class="text-gray-500 italic bg-gray-50 p-3 rounded-lg border border-gray-100">${item.example}</p>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button onclick="setView('instructions')" class="w-full py-5 rounded-3xl bg-green-500 text-white text-2xl font-bold btn-primary shadow-xl border-b-8 border-green-700">Got it! Next</button>
+                    </div>
+                `;
+            } else if (state.view === 'instructions') {
+                container.innerHTML = `
+                    <div class="card p-10 text-center animate-fadeIn">
+                        <div class="text-8xl mb-6">📢</div>
+                        <h2 class="bubble-font text-4xl mb-6 text-indigo-600">Instructions</h2>
+                        <p class="text-2xl text-gray-700 mb-10 leading-relaxed font-medium">Ready to play? Read the questions carefully and choose the correct answer.</p>
+                        <div class="grid grid-cols-2 gap-4 mb-10 text-left">
+                            <div class="bg-yellow-100 p-4 rounded-2xl flex items-center gap-3">
+                                <span class="text-3xl">🌟</span>
+                                <span class="font-bold">10 Questions</span>
+                            </div>
+                            <div class="bg-purple-100 p-4 rounded-2xl flex items-center gap-3">
+                                <span class="text-3xl">🔊</span>
+                                <span class="font-bold">Audio Help</span>
+                            </div>
+                        </div>
+                        <button onclick="startGame()" class="w-full py-6 rounded-3xl bg-indigo-600 text-white text-3xl font-bold btn-primary shadow-xl border-b-8 border-indigo-800">Start Game!</button>
+                    </div>
+                `;
+            } else if (state.view === 'quiz') {
+                const q = state.shuffledQuestions[state.currentQuestionIndex];
+                const progress = ((state.currentQuestionIndex) / 10) * 100;
+
+                // Create the question display with a box
+                const questionHtml = q.q.replace(/_____/g, state.isAnswered 
+                    ? `<span class="question-box filled">${state.selectedOption}</span>`
+                    : `<span class="question-box"></span>`
+                );
+
+                container.innerHTML = `
+                    <div class="card p-8 animate-fadeIn">
+                        <div class="flex justify-between items-center mb-6">
+                            <span class="px-4 py-2 bg-gray-100 rounded-full font-bold text-gray-600">Question ${state.currentQuestionIndex + 1} / 10</span>
+                            <button onclick="speakText('${q.q}')" class="w-14 h-14 rounded-full bg-indigo-600 text-white flex items-center justify-center btn-primary shadow-lg">
+                                <i class="fas fa-volume-up text-xl"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="progress-bar mb-8">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+
+                        <div class="min-h-[120px] flex items-center justify-center text-center mb-8">
+                            <h3 class="text-3xl font-bold text-gray-800 leading-tight">
+                                ${questionHtml}
+                            </h3>
+                        </div>
+                        
+                        <div class="grid gap-4 mb-8">
+                            ${q.options.map((opt) => {
+                                let statusClass = '';
+                                if (state.isAnswered) {
+                                    if (opt === q.correct) statusClass = 'correct';
+                                    else if (opt === state.selectedOption) statusClass = 'wrong';
+                                } else if (state.selectedOption === opt) {
+                                    statusClass = 'selected';
+                                }
+
+                                return `
+                                    <button 
+                                        onclick="handleOptionSelect('${opt}')" 
+                                        ${state.isAnswered ? 'disabled' : ''}
+                                        class="option-btn w-full p-5 text-left rounded-2xl text-xl font-bold bg-white shadow-sm border-2 ${statusClass}">
+                                        <div class="flex items-center">
+                                            <span class="w-8 h-8 rounded-full border-2 border-gray-200 mr-4 flex items-center justify-center text-sm">${state.isAnswered && opt === q.correct ? '✅' : state.isAnswered && opt === state.selectedOption ? '❌' : ''}</span>
+                                            ${opt}
+                                        </div>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        ${state.isAnswered ? `
+                            <div class="animate-bounceIn p-6 rounded-2xl bg-indigo-50 border-2 border-indigo-100 mb-8">
+                                <div class="text-indigo-900 text-lg">
+                                    <span class="block text-2xl font-black mb-2">${state.selectedOption === q.correct ? '🌟 Correct!' : '💡 Keep Learning!'}</span>
+                                    <div class="explanation-content">${q.explain}</div>
+                                </div>
+                            </div>
+                            <button onclick="nextQuestion()" class="w-full py-6 rounded-3xl bg-indigo-600 text-white text-2xl font-bold btn-primary shadow-xl border-b-8 border-indigo-800">
+                                ${state.currentQuestionIndex === 9 ? 'Finish Game' : 'Next Question'}
+                            </button>
+                        ` : `
+                            <button onclick="submitAnswer()" ${!state.selectedOption ? 'disabled style="opacity:0.5"' : ''} class="w-full py-6 rounded-3xl bg-indigo-500 text-white text-2xl font-bold btn-primary shadow-xl border-b-8 border-indigo-700">
+                                Check My Answer
+                            </button>
+                        `}
+                    </div>
+                `;
+            } else if (state.view === 'results') {
+                const percentage = (state.score / 10) * 100;
+                let badge = "🥈";
+                let msg = "Great Effort!";
+                if (percentage === 100) { badge = "💎"; msg = "Perfect Fusion!"; }
+                else if (percentage >= 70) { badge = "🥇"; msg = "Word Wizard!"; }
+
+                container.innerHTML = `
+                    <div class="card p-12 text-center animate-fadeIn relative overflow-hidden">
+                        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #00ff00, #00ffff, #0000ff, #8b00ff); background-size: 400% 400%; animation: gradientBG 8s linear infinite;"></div>
+                        
+                        <h2 class="bubble-font text-6xl mb-6 rainbow-text">Fusion Finished!</h2>
+                        <div class="text-9xl mb-6 floating">${badge}</div>
+                        <p class="text-3xl font-black text-gray-800 mb-2 uppercase tracking-wide">${msg}</p>
+                        <div class="inline-block px-8 py-4 bg-white rounded-3xl shadow-inner border-4 border-indigo-100 mb-10">
+                            <span class="text-6xl font-black text-indigo-600">${state.score}</span>
+                            <span class="text-3xl font-bold text-gray-400">/ 10</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="resetGame()" class="py-5 rounded-3xl bg-indigo-600 text-white text-xl font-bold btn-primary shadow-xl border-b-8 border-indigo-800">Play Again</button>
+                            <button onclick="state.view='home'; render();" class="py-5 rounded-3xl bg-white text-gray-700 text-xl font-bold btn-primary shadow-xl border-b-8 border-gray-200 border-2">Home</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function setView(view) {
+            state.view = view;
+            render();
+        }
+
+        function selectLevel(level) {
+            state.level = level;
+            state.view = 'learn';
+            render();
+        }
+
+        function startGame() {
+            const allQ = [...gameData[state.level].questions];
+            state.shuffledQuestions = allQ.sort(() => 0.5 - Math.random()).slice(0, 10);
+            state.currentQuestionIndex = 0;
+            state.score = 0;
+            state.view = 'quiz';
+            state.isAnswered = false;
+            state.selectedOption = null;
+            render();
+        }
+
+        function handleOptionSelect(opt) {
+            if (state.isAnswered) return;
+            state.selectedOption = opt;
+            render();
+        }
+
+        function submitAnswer() {
+            if (!state.selectedOption) return;
+            state.isAnswered = true;
+            if (state.selectedOption === state.shuffledQuestions[state.currentQuestionIndex].correct) {
+                state.score++;
+            }
+            render();
+        }
+
+        function nextQuestion() {
+            if (state.currentQuestionIndex < 9) {
+                state.currentQuestionIndex++;
+                state.isAnswered = false;
+                state.selectedOption = null;
+                render();
+            } else {
+                state.view = 'results';
+                render();
+            }
+        }
+
+        function resetGame() {
+            startGame();
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+                const cleanText = text.replace(/_____/g, "blank");
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.rate = 0.85;
+                utterance.pitch = 1.1;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+            @keyframes bounceIn { 
+                0% { opacity: 0; transform: translateY(10px); } 
+                60% { transform: translateY(-5px); } 
+                100% { opacity: 1; transform: translateY(0); } 
+            }
+            @keyframes gradientBG {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+            }
+            .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+            .animate-bounceIn { animation: bounceIn 0.5s ease-out forwards; }
+        `;
+        document.head.appendChild(style);
+
+        render();
+    </script>
+</body>
+</html>
